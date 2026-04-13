@@ -1,0 +1,4 @@
+{
+  "source": ["tienda.orders"],
+  "detail-type": ["order.created"]
+}

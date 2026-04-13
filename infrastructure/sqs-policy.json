@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "events.amazonaws.com"
+      },
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:eu-north-1:430165813080:orders-queue-uo275725",
+      "Condition": {
+        "ArnEquals": {
+          "aws:SourceArn": "arn:aws:events:eu-north-1:430165813080:rule/order-created-rule-uo275725"
+        }
+      }
+    }
+  ]    
+}
