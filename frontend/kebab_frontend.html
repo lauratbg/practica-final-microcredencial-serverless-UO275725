@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kebab Palace</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #c0392b;
+      --red-dark: #96281b;
+      --bg: #f5f5f0;
+      --surface: #ffffff;
+      --surface2: #f8f7f2;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.2);
+      --text: #1a1a18;
+      --text2: #5f5e5a;
+      --text3: #888780;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1a;
+        --surface: #2a2a28;
+        --surface2: #232321;
+        --border: rgba(255,255,255,0.1);
+        --border2: rgba(255,255,255,0.2);
+        --text: #f0ede6;
+        --text2: #b4b2a9;
+        --text3: #888780;
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border);
+      overflow: hidden;
+    }
+    .header {
+      background: var(--red);
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+    }
+    .header h1 { color: #fff; font-size: 24px; font-weight: 600; }
+    .header p  { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 5px; }
+    .main { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* API config */
+    .api-box {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border);
+      padding: 12px;
+    }
+    .api-box label { font-size: 11px; color: var(--text3); font-family: monospace; display: block; margin-bottom: 6px; }
+    .api-box input {
+      width: 100%; padding: 8px 10px; border-radius: var(--radius);
+      border: 0.5px solid var(--border2); font-size: 13px; font-family: monospace;
+      background: var(--surface); color: var(--text);
+    }
+    .api-box input:focus { outline: 2px solid var(--red); outline-offset: 0; }
+
+    /* Section titles */
+    .sec-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+
+    /* Menu grid */
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .menu-item {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 12px; cursor: default;
+      transition: border-color 0.15s;
+    }
+    .menu-item.selected { border: 1.5px solid var(--red); }
+    .menu-item .emoji { font-size: 26px; display: block; margin-bottom: 6px; }
+    .menu-item .name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .menu-item .price { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .qty-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .qty-btn {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 0.5px solid var(--border2); background: var(--surface2);
+      font-size: 17px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; color: var(--text); line-height: 1; flex-shrink: 0;
+    }
+    .qty-btn:hover { background: var(--bg); }
+    .qty-val { font-size: 14px; font-weight: 500; min-width: 18px; text-align: center; color: var(--text); }
+
+    /* Extras */
+    .extras-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .extra-chip {
+      padding: 5px 14px; border-radius: 20px;
+      border: 0.5px solid var(--border2); font-size: 13px; cursor: pointer;
+      background: var(--surface2); color: var(--text2); transition: all 0.15s;
+      user-select: none;
+    }
+    .extra-chip.selected { background: #fdf0f0; border-color: var(--red); color: var(--red); }
+    @media (prefers-color-scheme: dark) {
+      .extra-chip.selected { background: #3d1a18; color: #f08070; border-color: #c0392b; }
+    }
+
+    /* Notes */
+    textarea {
+      width: 100%; padding: 10px 12px; border-radius: var(--radius);
+      border: 0.5px solid var(--border); font-size: 14px;
+      background: var(--surface); color: var(--text); resize: none;
+      font-family: inherit; line-height: 1.5;
+    }
+    textarea:focus { outline: 2px solid var(--red); outline-offset: 0; }
+
+    /* Summary */
+    .summary-box {
+      background: var(--surface2); border-radius: var(--radius);
+      border: 0.5px solid var(--border); padding: 14px;
+    }
+    .sum-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text2); padding: 3px 0; }
+    .sum-total {
+      display: flex; justify-content: space-between; font-size: 15px;
+      font-weight: 500; color: var(--text);
+      border-top: 0.5px solid var(--border); margin-top: 8px; padding-top: 10px;
+    }
+    .empty-msg { font-size: 13px; color: var(--text3); text-align: center; padding: 6px 0; }
+
+    /* Button */
+    .btn-primary {
+      width: 100%; padding: 14px; background: var(--red); color: #fff;
+      border: none; border-radius: var(--radius); font-size: 15px;
+      font-weight: 500; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Divider */
+    .divider { height: 0.5px; background: var(--border); }
+
+    /* Status card */
+    .status-card {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border); padding: 1.25rem;
+    }
+    .id-row { display: flex; gap: 8px; margin: 12px 0; }
+    .id-row input {
+      flex: 1; padding: 9px 12px; border-radius: var(--radius);
+      border: 0.5px solid var(--border); font-size: 14px;
+      background: var(--surface); color: var(--text);
+    }
+    .id-row input:focus { outline: 2px solid var(--red); outline-offset: 0; }
+    .id-row button {
+      padding: 9px 16px; background: var(--red); color: #fff;
+      border: none; border-radius: var(--radius); font-size: 13px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .id-row button:hover { background: var(--red-dark); }
+    .badge {
+      display: inline-block; padding: 4px 14px; border-radius: 20px;
+      font-size: 13px; font-weight: 500;
+    }
+    .badge-pending   { background: #faeeda; color: #854f0b; }
+    .badge-preparing { background: #e6f1fb; color: #185fa5; }
+    .badge-ready     { background: #eaf3de; color: #3b6d11; }
+    .badge-delivered { background: #e1f5ee; color: #0f6e56; }
+    .badge-error     { background: #fcebeb; color: #a32d2d; }
+    .status-details { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .det-row { display: flex; justify-content: space-between; font-size: 13px; }
+    .det-label { color: var(--text2); }
+    .det-value { font-weight: 500; color: var(--text); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #2c2c2a; color: #fff; padding: 12px 20px;
+      border-radius: var(--radius); font-size: 14px;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      white-space: nowrap; z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="header">
+    <h1>🥙 Kebab Palace</h1>
+    <p>Pide tu kebab y lo tenemos listo en 15 min</p>
+  </div>
+
+  <div class="main">
+
+    <!-- Menu -->
+    <div>
+      <div class="sec-title">🥙 Elige tu kebab</div>
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+
+    <!-- Extras -->
+    <div>
+      <div class="sec-title">🧄 Salsas y extras</div>
+      <div class="extras-wrap" id="extrasWrap"></div>
+    </div>
+
+    <!-- Notes -->
+    <div>
+      <div class="sec-title">📝 Notas del pedido</div>
+      <textarea id="notes" rows="2" placeholder="Sin cebolla, extra picante, sin gluten..."></textarea>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Summary -->
+    <div>
+      <div class="sec-title">🧾 Resumen</div>
+      <div class="summary-box" id="summaryBox">
+        <div class="empty-msg">Añade productos al pedido</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnOrder">Hacer pedido →</button>
+
+    <div class="divider"></div>
+
+    <!-- Status -->
+    <div class="status-card">
+      <div class="sec-title">🔍 Consultar estado del pedido</div>
+      <div class="id-row">
+        <input type="text" id="statusId" placeholder="ID del pedido (ej: ord_abc123)"/>
+        <button onclick="checkStatus()">Consultar</button>
+      </div>
+      <div id="statusResult"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API_BASE = 'https://it2l2ufpef.execute-api.eu-north-1.amazonaws.com/prod';
+
+  const MENU = [
+    { id: 'k1', name: 'Kebab pollo',   price: 7.50, emoji: '🫓' },
+    { id: 'k2', name: 'Kebab mixto',   price: 8.50, emoji: '🥙' },
+    { id: 'k3', name: 'Döner ternera', price: 9.00, emoji: '🍖' },
+    { id: 'k4', name: 'Falafel wrap',  price: 7.00, emoji: '🧆' },
+    { id: 'k5', name: 'Durum pollo',   price: 8.00, emoji: '🌯' },
+    { id: 'k6', name: 'Kebab XXL',     price: 11.50, emoji: '🔥' },
+  ];
+
+  const EXTRAS = [
+    'Salsa picante', 'Yogur', 'Garlic', 'Ketchup',
+    'Sin cebolla', 'Extra queso', 'Sin tomate', 'Doble salsa'
+  ];
+
+  const STATUS_LABELS = {
+    pending:   'Pendiente',
+    preparing: 'Preparando',
+    ready:     'Listo para recoger',
+    delivered: 'Entregado'
+  };
+
+  let cart = {};
+  let extras = new Set();
+
+  // ── Render menu ──────────────────────────────────────────────
+  function renderMenu() {
+    document.getElementById('menuGrid').innerHTML = MENU.map(item => `
+      <div class="menu-item${cart[item.id] ? ' selected' : ''}" id="card-${item.id}">
+        <span class="emoji">${item.emoji}</span>
+        <div class="name">${item.name}</div>
+        <div class="price">${item.price.toFixed(2)} €</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty('${item.id}', -1)">−</button>
+          <span class="qty-val" id="qty-${item.id}">${cart[item.id] || 0}</span>
+          <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function changeQty(id, delta) {
+    cart[id] = Math.max(0, (cart[id] || 0) + delta);
+    if (cart[id] === 0) delete cart[id];
+    const qtyEl = document.getElementById('qty-' + id);
+    if (qtyEl) qtyEl.textContent = cart[id] || 0;
+    const card = document.getElementById('card-' + id);
+    if (card) card.classList.toggle('selected', !!cart[id]);
+    renderSummary();
+  }
+
+  // ── Render extras ────────────────────────────────────────────
+  function renderExtras() {
+    document.getElementById('extrasWrap').innerHTML = EXTRAS.map(e => `
+      <div class="extra-chip${extras.has(e) ? ' selected' : ''}" onclick="toggleExtra('${e}')">${e}</div>
+    `).join('');
+  }
+
+  function toggleExtra(e) {
+    extras.has(e) ? extras.delete(e) : extras.add(e);
+    renderExtras();
+  }
+
+  // ── Render summary ───────────────────────────────────────────
+  function renderSummary() {
+    const box = document.getElementById('summaryBox');
+    const ids = Object.keys(cart);
+    if (!ids.length) { box.innerHTML = '<div class="empty-msg">Añade productos al pedido</div>'; return; }
+    let total = 0;
+    const rows = ids.map(id => {
+      const item = MENU.find(m => m.id === id);
+      const sub = item.price * cart[id];
+      total += sub;
+      return `<div class="sum-row"><span>${item.emoji} ${item.name} × ${cart[id]}</span><span>${sub.toFixed(2)} €</span></div>`;
+    }).join('');
+    box.innerHTML = rows + `<div class="sum-total"><span>Total</span><span>${total.toFixed(2)} €</span></div>`;
+  }
+
+  // ── Place order ──────────────────────────────────────────────
+  document.getElementById('btnOrder').addEventListener('click', placeOrder);
+
+  async function placeOrder() {
+    if (!Object.keys(cart).length) { showToast('Añade al menos un producto'); return; }
+    const base = API_BASE;
+    const btn = document.getElementById('btnOrder');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    const body = {
+      items: Object.keys(cart).map(id => ({
+        id,
+        qty: cart[id],
+        name: MENU.find(m => m.id === id).name,
+        price: MENU.find(m => m.id === id).price
+      })),
+      extras: [...extras],
+      notes: document.getElementById('notes').value.trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const res = await fetch(`${base}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const orderId = data.orderId || data.id || data.order_id || '—';
+        showToast('✅ Pedido creado: ' + orderId);
+        document.getElementById('statusId').value = orderId;
+        cart = {};
+        extras.clear();
+        renderMenu();
+        renderExtras();
+        renderSummary();
+        document.getElementById('notes').value = '';
+      } else {
+        showToast('❌ Error: ' + (data.message || res.status));
+      }
+    } catch (e) {
+      showToast('❌ No se pudo conectar al API');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Hacer pedido →';
+  }
+
+  // ── Check status ─────────────────────────────────────────────
+  async function checkStatus() {
+    const id = document.getElementById('statusId').value.trim();
+    if (!id) { showToast('Introduce un ID de pedido'); return; }
+    const base = API_BASE;
+    const result = document.getElementById('statusResult');
+    result.innerHTML = '<p style="font-size:13px;color:var(--text2);margin-top:6px">Consultando...</p>';
+
+    try {
+      const res = await fetch(`${base}/orders/${encodeURIComponent(id)}`);
+      const data = await res.json();
+      if (res.ok) {
+        const status = data.status || data.estado || 'pending';
+        const badgeClass = 'badge badge-' + (['pending','preparing','ready','delivered'].includes(status) ? status : 'pending');
+        result.innerHTML = `
+          <div class="status-details">
+            <div class="det-row">
+              <span class="det-label">Estado</span>
+              <span class="${badgeClass}">${STATUS_LABELS[status] || status}</span>
+            </div>
+            ${data.createdAt ? `<div class="det-row"><span class="det-label">Creado</span><span class="det-value">${new Date(data.createdAt).toLocaleString('es-ES')}</span></div>` : ''}
+            ${data.items ? `<div class="det-row"><span class="det-label">Productos</span><span class="det-value">${data.items.length} artículo(s)</span></div>` : ''}
+            ${data.total != null ? `<div class="det-row"><span class="det-label">Total</span><span class="det-value">${Number(data.total).toFixed(2)} €</span></div>` : ''}
+          </div>`;
+      } else {
+        result.innerHTML = '<span class="badge badge-error" style="margin-top:8px;display:inline-block">Pedido no encontrado</span>';
+      }
+    } catch (e) {
+      result.innerHTML = '<span class="badge badge-error" style="margin-top:8px;display:inline-block">Error de conexión</span>';
+    }
+  }
+
+  // ── Toast ────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Init ─────────────────────────────────────────────────────
+  renderMenu();
+  renderExtras();
+  renderSummary();
+</script>
+</body>
+</html>
